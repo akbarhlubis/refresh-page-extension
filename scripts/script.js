@@ -100,4 +100,22 @@ $(document).ready(function() {
       isReloading = false;
     }
   });
+
+  // Pick selector
+  $('#pick-selector').on('click', function() {
+    chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+      if (tabs[0]) {
+        chrome.tabs.sendMessage(tabs[0].id, {action: 'pickSelector'});
+      }
+    });
+  });
+
+  // Listen for selector picked from content script
+  chrome.runtime.onMessage.addListener(function(msg, sender, sendResponse) {
+    if (msg.action === 'selectorPicked' && msg.selector) {
+      selectors.push(msg.selector);
+      renderSelectors();
+      saveSelectors();
+    }
+  });
 });

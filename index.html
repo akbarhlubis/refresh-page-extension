@@ -3,29 +3,152 @@
     <meta charset="UTF-8">
     <title>Refresh Page Extension</title>
     <style>
-      body { font-family: sans-serif; margin: 16px; }
-      #selectors-container { margin-bottom: 16px; }
-      #selectors-list input { margin-right: 8px; }
-      #selectors-list button { margin-right: 8px; }
+      body {
+        font-family: 'Segoe UI', Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background: #f7f7f7;
+      }
+      .container {
+        background: #fff;
+        max-width: 400px;
+        margin: 32px auto;
+        padding: 24px 28px 18px 28px;
+        border-radius: 10px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+      }
+      h1 {
+        font-size: 1.3rem;
+        margin-bottom: 18px;
+        color: #333;
+        letter-spacing: 1px;
+      }
+      #selectors-container {
+        margin-bottom: 18px;
+      }
+      #selectors-container label {
+        font-weight: 500;
+        color: #444;
+        margin-bottom: 6px;
+        display: block;
+      }
+      #selectors-list > div {
+        display: flex;
+        align-items: center;
+        margin-bottom: 6px;
+      }
+      #selectors-list input {
+        flex: 1;
+        padding: 5px 8px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        margin-right: 8px;
+        font-size: 13px;
+      }
+      #selectors-list button {
+        background: #e74c3c;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        padding: 4px 10px;
+        cursor: pointer;
+        font-size: 12px;
+        transition: background 0.2s;
+      }
+      #selectors-list button:hover {
+        background: #c0392b;
+      }
+      #add-selector, #pick-selector {
+        background: #3498db;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        padding: 6px 14px;
+        margin-right: 8px;
+        margin-top: 4px;
+        cursor: pointer;
+        font-size: 13px;
+        transition: background 0.2s;
+      }
+      #add-selector:hover, #pick-selector:hover {
+        background: #217dbb;
+      }
+      #toggle-condition {
+        background: #f1c40f;
+        color: #333;
+        border: none;
+        border-radius: 4px;
+        padding: 6px 14px;
+        font-size: 13px;
+        cursor: pointer;
+        margin-right: 8px;
+        transition: background 0.2s;
+      }
+      #toggle-condition.off {
+        background: #ddd;
+        color: #888;
+      }
+      #interval-container {
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+      }
+      #interval-container label {
+        margin-right: 8px;
+        font-size: 13px;
+        color: #444;
+      }
+      #interval-input {
+        width: 90px;
+        padding: 5px 8px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 13px;
+        margin-right: 10px;
+      }
+      #toggle-reload {
+        background: #2ecc71;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        padding: 6px 14px;
+        font-size: 13px;
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+      #toggle-reload.off {
+        background: #ddd;
+        color: #888;
+      }
+      .desc {
+        font-size: 12px;
+        color: #888;
+        margin-top: 2px;
+        margin-bottom: 10px;
+        display: block;
+      }
     </style>
   </head>
   <body>
-    <h1>Refresh Page</h1>
-    <div id="selectors-container">
-      <label>Selectors to check:</label>
-      <div id="selectors-list"></div>
-      <button id="add-selector" type="button">Add Selector</button>
+    <div class="container">
+      <h1>AUTO-Refresher 🗘</h1>
+      <div id="selectors-container">
+        <label>Selectors to check:</label>
+        <div id="selectors-list"></div>
+        <button id="add-selector" type="button">Add Selector</button>
+        <button id="pick-selector" type="button">Pick Selector</button>
+      </div>
+      <div style="margin-bottom: 16px;">
+        <button id="toggle-condition" type="button">Condition: ON</button>
+        <span class="desc">(Toggle to use or ignore selector condition)</span>
+      </div>
+      <div id="interval-container">
+        <label>Interval (ms): </label>
+        <input id="interval-input" type="number" min="100" value="1000" />
+        <button id="toggle-reload" type="button">Turn ON Reload</button>
+      </div>
     </div>
-    <div style="margin-bottom: 16px;">
-      <button id="toggle-condition" type="button">Condition: ON</button>
-      <span style="font-size: 12px; color: #666;">(Toggle to use or ignore selector condition)</span>
-    </div>
-    <div id="interval-container" style="margin-bottom:16px;">
-      <label style="margin-right:8px;">Interval (ms): </label>
-      <input id="interval-input" type="number" min="100" value="1000" style="margin-right:8px;" />
-      <button id="toggle-reload" type="button">Turn ON Reload</button>
-    </div>
-    <script src="jquery-3.7.1.min.js"></script>
-    <script src="script.js"></script>
+    <script src="libs/jquery-3.7.1.min.js"></script>
+    <script src="scripts/script.js"></script>
   </body>
 </html>
