@@ -1,0 +1,31 @@
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Refresh Page Extension</title>
+    <style>
+      body { font-family: sans-serif; margin: 16px; }
+      #selectors-container { margin-bottom: 16px; }
+      #selectors-list input { margin-right: 8px; }
+      #selectors-list button { margin-right: 8px; }
+    </style>
+  </head>
+  <body>
+    <h1>Refresh Page</h1>
+    <div id="selectors-container">
+      <label>Selectors to check:</label>
+      <div id="selectors-list"></div>
+      <button id="add-selector" type="button">Add Selector</button>
+    </div>
+    <div style="margin-bottom: 16px;">
+      <button id="toggle-condition" type="button">Condition: ON</button>
+      <span style="font-size: 12px; color: #666;">(Toggle to use or ignore selector condition)</span>
+    </div>
+    <div id="interval-container" style="margin-bottom:16px;">
+      <label style="margin-right:8px;">Interval (ms): </label>
+      <input id="interval-input" type="number" min="100" value="1000" style="margin-right:8px;" />
+      <button id="toggle-reload" type="button">Turn ON Reload</button>
+    </div>
+    <script src="jquery-3.7.1.min.js"></script>
+    <script src="script.js"></script>
+  </body>
+</html>

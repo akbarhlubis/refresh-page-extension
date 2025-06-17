@@ -1,0 +1,27 @@
+{
+  "manifest_version": 3,
+  "name": "Refresh Page Extension",
+  "version": "1.0",
+  "description": "Reloads the current tab if selected elements are not found.",
+  "permissions": [
+    "storage",
+    "tabs",
+    "scripting"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "index.html",
+    "default_icon": "hello_extensions.png"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"]
+    }
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ]
+}
