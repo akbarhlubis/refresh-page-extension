@@ -1,3 +1,68 @@
+  // URL reload opsional
+  let urlReloadActive = false;
+  let urlReloadValue = '';
+  chrome.storage.local.get(['urlReloadActive', 'urlReloadValue'], function(result) {
+    urlReloadActive = !!result.urlReloadActive;
+    urlReloadValue = result.urlReloadValue || '';
+    if (urlReloadActive) {
+      $('#toggle-url-reload').removeClass('off').text('ON');
+      $('#url-reload-fields').show();
+    } else {
+      $('#toggle-url-reload').addClass('off').text('OFF');
+      $('#url-reload-fields').hide();
+    }
+    $('#url-reload-input').val(urlReloadValue);
+  });
+
+  $('#toggle-url-reload').on('click', function() {
+    urlReloadActive = !urlReloadActive;
+    if (urlReloadActive) {
+      $(this).removeClass('off').text('ON');
+      $('#url-reload-fields').show();
+    } else {
+      $(this).addClass('off').text('OFF');
+      $('#url-reload-fields').hide();
+    }
+    chrome.storage.local.set({urlReloadActive});
+  });
+  $('#url-reload-input').on('input', function() {
+    urlReloadValue = $(this).val();
+    chrome.storage.local.set({urlReloadValue});
+  });
+  // Debug button: cek selector dan value di halaman aktif
+  $('#debug-check').on('click', function() {
+    // Ambil selector dari compare field
+    const sel1 = $('#compare-selector1').val();
+    const sel2 = $('#compare-selector2').val();
+    chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+      if (tabs[0]) {
+        chrome.scripting.executeScript({
+          target: {tabId: tabs[0].id},
+          func: function(sel1, sel2) {
+            let el1 = null, el2 = null, v1 = '', v2 = '';
+            try { el1 = document.querySelector(sel1); } catch(e){}
+            try { el2 = document.querySelector(sel2); } catch(e){}
+            if (el1) v1 = el1.value !== undefined ? el1.value : (el1.textContent || '');
+            if (el2) v2 = el2.value !== undefined ? el2.value : (el2.textContent || '');
+            return {
+              sel1, found1: !!el1, value1: v1,
+              sel2, found2: !!el2, value2: v2
+            };
+          },
+          args: [sel1, sel2]
+        }, function(results) {
+          if (chrome.runtime.lastError || !results || !results[0]) {
+            $('#debug-result').text('Gagal membaca selector.').show();
+            return;
+          }
+          const r = results[0].result;
+          let html = `<b>Selector 1:</b> ${r.sel1} <br> Ditemukan: <b>${r.found1}</b> <br> Value: <b>${r.value1}</b><br><br>`;
+          html += `<b>Selector 2:</b> ${r.sel2} <br> Ditemukan: <b>${r.found2}</b> <br> Value: <b>${r.value2}</b>`;
+          $('#debug-result').html(html).show();
+        });
+      }
+    });
+  });
 let intervalMs = 1000;
 let isReloading = false;
 let selectors = [];
@@ -25,13 +90,82 @@ function saveCondition() {
   chrome.storage.local.set({useCondition});
 }
 
+let compareActive = false;
+let compareConfig = {
+  selector1: '',
+  operator: '=',
+  selector2: '',
+  action: 'refresh',
+};
+
+function saveCompareConfig() {
+  chrome.storage.local.set({compareActive, compareConfig});
+}
+
+function loadCompareConfig(cb) {
+  chrome.storage.local.get(['compareActive', 'compareConfig'], function(result) {
+    compareActive = typeof result.compareActive === 'boolean' ? result.compareActive : false;
+    compareConfig = result.compareConfig || {selector1:'', operator:'=', selector2:'', action:'refresh'};
+    if (cb) cb();
+  });
+}
+
 $(document).ready(function() {
-  // Load selectors
-  chrome.storage.local.get(['selectors', 'useCondition'], function(result) {
+  // Load selectors & compare config
+  chrome.storage.local.get(['selectors', 'useCondition', 'compareActive', 'compareConfig'], function(result) {
     selectors = result.selectors || [''];
     useCondition = typeof result.useCondition === 'boolean' ? result.useCondition : true;
+    compareActive = typeof result.compareActive === 'boolean' ? result.compareActive : false;
+    compareConfig = result.compareConfig || {selector1:'', operator:'=', selector2:'', action:'refresh'};
     renderSelectors();
     $('#toggle-condition').text('Condition: ' + (useCondition ? 'ON' : 'OFF'));
+    if (useCondition) {
+      $('#toggle-condition').removeClass('off');
+    } else {
+      $('#toggle-condition').addClass('off');
+    }
+    // Set compare UI
+    if (compareActive) {
+      $('#toggle-compare').removeClass('off').text('ON');
+      $('#compare-fields').show();
+    } else {
+      $('#toggle-compare').addClass('off').text('OFF');
+      $('#compare-fields').hide();
+    }
+    $('#compare-selector1').val(compareConfig.selector1);
+    $('#compare-operator').val(compareConfig.operator);
+    $('#compare-selector2').val(compareConfig.selector2);
+    $('#compare-action').val(compareConfig.action);
+  });
+  // Toggle compare feature
+  $('#toggle-compare').on('click', function() {
+    compareActive = !compareActive;
+    if (compareActive) {
+      $(this).removeClass('off').text('ON');
+      $('#compare-fields').show();
+    } else {
+      $(this).addClass('off').text('OFF');
+      $('#compare-fields').hide();
+    }
+    saveCompareConfig();
+  });
+
+  // Update compare config fields
+  $('#compare-selector1').on('input', function() {
+    compareConfig.selector1 = $(this).val();
+    saveCompareConfig();
+  });
+  $('#compare-operator').on('change', function() {
+    compareConfig.operator = $(this).val();
+    saveCompareConfig();
+  });
+  $('#compare-selector2').on('input', function() {
+    compareConfig.selector2 = $(this).val();
+    saveCompareConfig();
+  });
+  $('#compare-action').on('change', function() {
+    compareConfig.action = $(this).val();
+    saveCompareConfig();
   });
 
   // Add selector
@@ -61,6 +195,11 @@ $(document).ready(function() {
   $('#toggle-condition').on('click', function() {
     useCondition = !useCondition;
     $(this).text('Condition: ' + (useCondition ? 'ON' : 'OFF'));
+    if (useCondition) {
+      $(this).removeClass('off');
+    } else {
+      $(this).addClass('off');
+    }
     saveCondition();
     chrome.runtime.sendMessage({action: 'updateCondition', useCondition});
   });
@@ -76,7 +215,16 @@ $(document).ready(function() {
     }
     if (result.isReloading) {
       isReloading = result.isReloading;
-      if (isReloading) $button.text('Turn OFF Reload');
+      if (isReloading) {
+        $button.text('Turn OFF Reload');
+        $button.removeClass('off');
+      } else {
+        $button.text('Turn ON Reload');
+        $button.addClass('off');
+      }
+    } else {
+      $button.text('Turn ON Reload');
+      $button.addClass('off');
     }
   });
 
@@ -92,11 +240,13 @@ $(document).ready(function() {
       chrome.runtime.sendMessage({action: 'start', intervalMs});
       chrome.storage.local.set({intervalMs, isReloading: true});
       $button.text('Turn OFF Reload');
+      $button.removeClass('off');
       isReloading = true;
     } else {
       chrome.runtime.sendMessage({action: 'stop'});
       chrome.storage.local.set({isReloading: false});
       $button.text('Turn ON Reload');
+      $button.addClass('off');
       isReloading = false;
     }
   });

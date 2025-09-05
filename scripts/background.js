@@ -101,46 +101,66 @@ function startReloading() {
   stopReloading();
   try {
     intervalId = setInterval(() => {
-      chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-        if (chrome.runtime.lastError) {
-          logError('Failed to query tabs', chrome.runtime.lastError);
-          return;
-        }
-        if (tabs[0]) {
-          if (useCondition) {
-            chrome.storage.local.get(['selectors'], function(result) {
-              if (chrome.runtime.lastError) {
-                logError('Failed to get selectors', chrome.runtime.lastError);
-                return;
+      chrome.storage.local.get(['urlReloadActive', 'urlReloadValue'], function(urlResult) {
+        if (urlResult.urlReloadActive && urlResult.urlReloadValue) {
+          // Reload semua tab yang URL-nya cocok
+          chrome.tabs.query({}, function(tabs) {
+            tabs.forEach(tab => {
+              if (tab.url && tab.url.includes(urlResult.urlReloadValue)) {
+                chrome.tabs.reload(tab.id, {}, () => {
+                  if (chrome.runtime.lastError) {
+                    logError('Failed to reload tab (url match)', chrome.runtime.lastError);
+                  } else {
+                    logSuccess('Tab reloaded (url match): ' + tab.url);
+                  }
+                });
               }
-              const selectors = result.selectors || [];
-              chrome.tabs.sendMessage(tabs[0].id, {action: 'checkElements', selectors}, (response) => {
-                if (chrome.runtime.lastError) {
-                  logError('Failed to send checkElements', chrome.runtime.lastError);
-                  return;
-                }
-                if (response && response.shouldReload) {
-                  chrome.tabs.reload(tabs[0].id, {}, () => {
+            });
+          });
+        } else {
+          // Default: reload tab aktif sesuai kondisi lama
+          chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+            if (chrome.runtime.lastError) {
+              logError('Failed to query tabs', chrome.runtime.lastError);
+              return;
+            }
+            if (tabs[0]) {
+              if (useCondition) {
+                chrome.storage.local.get(['selectors'], function(result) {
+                  if (chrome.runtime.lastError) {
+                    logError('Failed to get selectors', chrome.runtime.lastError);
+                    return;
+                  }
+                  const selectors = result.selectors || [];
+                  chrome.tabs.sendMessage(tabs[0].id, {action: 'checkElements', selectors}, (response) => {
                     if (chrome.runtime.lastError) {
-                      logError('Failed to reload tab', chrome.runtime.lastError);
+                      logError('Failed to send checkElements', chrome.runtime.lastError);
+                      return;
+                    }
+                    if (response && response.shouldReload) {
+                      chrome.tabs.reload(tabs[0].id, {}, () => {
+                        if (chrome.runtime.lastError) {
+                          logError('Failed to reload tab', chrome.runtime.lastError);
+                        } else {
+                          logSuccess('Tab reloaded (condition not met)');
+                        }
+                      });
                     } else {
-                      logSuccess('Tab reloaded (condition not met)');
+                      logSuccess('No reload needed (condition met)');
                     }
                   });
-                } else {
-                  logSuccess('No reload needed (condition met)');
-                }
-              });
-            });
-          } else {
-            chrome.tabs.reload(tabs[0].id, {}, () => {
-              if (chrome.runtime.lastError) {
-                logError('Failed to reload tab', chrome.runtime.lastError);
+                });
               } else {
-                logSuccess('Tab reloaded (no condition)');
+                chrome.tabs.reload(tabs[0].id, {}, () => {
+                  if (chrome.runtime.lastError) {
+                    logError('Failed to reload tab', chrome.runtime.lastError);
+                  } else {
+                    logSuccess('Tab reloaded (no condition)');
+                  }
+                });
               }
-            });
-          }
+            }
+          });
         }
       });
     }, intervalMs);

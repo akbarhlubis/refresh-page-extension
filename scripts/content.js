@@ -3,7 +3,38 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     let allExist = msg.selectors
       .filter(sel => sel.trim() !== '')
       .every(sel => !!document.querySelector(sel));
-    sendResponse({shouldReload: !allExist});
+
+    // Cek apakah ada fitur compare aktif
+    chrome.storage.local.get(['compareActive', 'compareConfig'], function(result) {
+      let shouldReload = !allExist;
+      if (result.compareActive && result.compareConfig) {
+        const {selector1, operator, selector2, action} = result.compareConfig;
+        let v1 = '';
+        let v2 = '';
+        try {
+          let el1 = document.querySelector(selector1);
+          let el2 = document.querySelector(selector2);
+          v1 = el1 ? (el1.value !== undefined ? el1.value : (el1.textContent || '')) : '';
+          v2 = el2 ? (el2.value !== undefined ? el2.value : (el2.textContent || '')) : '';
+        } catch (e) {}
+        let cmp = false;
+        if (operator === '=') cmp = v1 == v2;
+        else if (operator === '!=') cmp = v1 != v2;
+        else if (operator === '>') cmp = parseFloat(v1) > parseFloat(v2);
+        else if (operator === '<') cmp = parseFloat(v1) < parseFloat(v2);
+        else if (operator === '>=') cmp = parseFloat(v1) >= parseFloat(v2);
+        else if (operator === '<=') cmp = parseFloat(v1) <= parseFloat(v2);
+        // Jika aksi refresh, reload jika cmp true. Jika no-refresh, reload jika cmp false.
+        if (action === 'refresh') {
+          shouldReload = cmp;
+        } else if (action === 'no-refresh') {
+          shouldReload = !cmp;
+        }
+      }
+      sendResponse({shouldReload});
+    });
+    // Agar sendResponse async
+    return true;
   }
 });
 
