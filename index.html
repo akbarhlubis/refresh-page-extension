@@ -1,240 +1,117 @@
-      <div id="url-reload-container" style="margin-bottom: 18px; padding: 10px 0 0 0; border-top: 1px solid #ececec;">
-        <div style="display: flex; align-items: center; margin-bottom: 8px;">
-          <label style="font-weight:600; color:#3b3b3b; font-size:14px; flex:1;">Reload URL tertentu (opsional):</label>
-          <button id="toggle-url-reload" type="button" class="off" style="margin-left:10px;">OFF</button>
-        </div>
-        <div id="url-reload-fields" style="display:none; gap:8px; flex-wrap:wrap; align-items:center;">
-          <input id="url-reload-input" type="text" placeholder="https://contoh.com/page" style="width:220px; padding:6px 8px; border-radius:6px; border:1.5px solid #bfc9d1; font-size:13px; margin-right:6px;" />
-          <span class="desc" style="margin:0;">Tab dengan URL ini akan di-reload otomatis</span>
-        </div>
-      </div>
-      <div id="debug-container" style="margin-bottom: 18px; padding: 10px 0 0 0; border-top: 1px solid #ececec;">
-        <button id="debug-check" type="button" style="background:#f59e42;color:#fff;border:none;border-radius:6px;padding:7px 18px;font-size:14px;font-weight:600;cursor:pointer;">Debug Selector & Value</button>
-        <div id="debug-result" style="margin-top:10px;font-size:13px;color:#374151;background:#f1f5f9;padding:8px 10px;border-radius:6px;display:none;"></div>
-      </div>
 <html>
   <head>
-    <meta charset="UTF-8">
-    <title>Refresh Page Extension</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
-    <style>
-      body {
-        font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
-        margin: 0;
-        padding: 0;
-        background: linear-gradient(120deg, #e0e7ff 0%, #f7f7f7 100%);
-        min-height: 100vh;
-      }
-      .container {
-        background: #fff;
-        max-width: 420px;
-        margin: 40px auto;
-        padding: 32px 32px 22px 32px;
-        border-radius: 16px;
-        box-shadow: 0 4px 24px rgba(0,0,0,0.10);
-        position: relative;
-      }
-      .logo {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-bottom: 18px;
-      }
-      .logo img {
-        width: 38px;
-        height: 38px;
-        margin-right: 10px;
-      }
-      .logo span {
-        font-size: 1.35rem;
-        font-weight: 600;
-        color: #3b3b3b;
-        letter-spacing: 1px;
-      }
-      h1 {
-        font-size: 1.1rem;
-        margin-bottom: 18px;
-        color: #4f4f4f;
-        letter-spacing: 0.5px;
-        text-align: center;
-        font-weight: 400;
-      }
-      #selectors-container {
-        margin-bottom: 18px;
-      }
-      #selectors-container label {
-        font-weight: 600;
-        color: #3b3b3b;
-        margin-bottom: 6px;
-        display: block;
-        font-size: 14px;
-      }
-      #selectors-list > div {
-        display: flex;
-        align-items: center;
-        margin-bottom: 7px;
-      }
-      #selectors-list input {
-        flex: 1;
-        padding: 7px 10px;
-        border: 1.5px solid #bfc9d1;
-        border-radius: 6px;
-        margin-right: 8px;
-        font-size: 14px;
-        transition: border 0.2s;
-      }
-      #selectors-list input:focus {
-        border: 1.5px solid #6366f1;
-        outline: none;
-      }
-      #selectors-list button {
-        background: #f87171;
-        color: #fff;
-        border: none;
-        border-radius: 6px;
-        padding: 5px 12px;
-        cursor: pointer;
-        font-size: 13px;
-        font-weight: 600;
-        transition: background 0.2s, box-shadow 0.2s;
-        box-shadow: 0 1px 4px rgba(248,113,113,0.08);
-      }
-      #selectors-list button:hover {
-        background: #dc2626;
-      }
-      #add-selector, #pick-selector {
-        background: #6366f1;
-        color: #fff;
-        border: none;
-        border-radius: 6px;
-        padding: 7px 18px;
-        margin-right: 8px;
-        margin-top: 4px;
-        cursor: pointer;
-        font-size: 14px;
-        font-weight: 600;
-        transition: background 0.2s, box-shadow 0.2s;
-        box-shadow: 0 1px 4px rgba(99,102,241,0.08);
-      }
-      #add-selector:hover, #pick-selector:hover {
-        background: #4338ca;
-      }
-      #toggle-condition {
-        background: #22c55e;
-        color: #fff;
-        border: none;
-        border-radius: 6px;
-        padding: 7px 18px;
-        font-size: 14px;
-        font-weight: 600;
-        cursor: pointer;
-        margin-right: 8px;
-        transition: background 0.2s, box-shadow 0.2s;
-        box-shadow: 0 1px 4px rgba(34,197,94,0.08);
-      }
-      #toggle-condition.off {
-        background: #f87171;
-        color: #fff;
-      }
-      #interval-container {
-        margin-bottom: 18px;
-        display: flex;
-        align-items: center;
-      }
-      #interval-container label {
-        margin-right: 8px;
-        font-size: 14px;
-        color: #3b3b3b;
-        font-weight: 500;
-      }
-      #interval-input {
-        width: 100px;
-        padding: 7px 10px;
-        border: 1.5px solid #bfc9d1;
-        border-radius: 6px;
-        font-size: 14px;
-        margin-right: 12px;
-        transition: border 0.2s;
-      }
-      #interval-input:focus {
-        border: 1.5px solid #6366f1;
-        outline: none;
-      }
-      #toggle-reload {
-        background: #6366f1;
-        color: #fff;
-        border: none;
-        border-radius: 6px;
-        padding: 7px 18px;
-        font-size: 14px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: background 0.2s, box-shadow 0.2s;
-        box-shadow: 0 1px 4px rgba(99,102,241,0.08);
-      }
-      #toggle-reload.off {
-        background: #f87171;
-        color: #fff;
-      }
-      .desc {
-        font-size: 12.5px;
-        color: #7b7b7b;
-        margin-top: 2px;
-        margin-bottom: 10px;
-        display: block;
-      }
-      @media (max-width: 500px) {
-        .container {
-          max-width: 98vw;
-          padding: 12px 4vw 12px 4vw;
-        }
-      }
-    </style>
-  </head>
-  <body>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Page Refresher</title>
+  <link rel="stylesheet" href="popup.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+</head> 
+<body>
     <div class="container">
-      <div class="logo">
-        <img src="assets/hello_extensions.png" alt="Logo" />
-        <span>Auto-Refresher</span>
-      </div>
-      <h1>Smart page refresher for your workflow</h1>
-      <div id="selectors-container">
-        <label>Selectors to check:</label>
-        <div id="selectors-list"></div>
-        <button id="add-selector" type="button">Add Selector</button>
-        <button id="pick-selector" type="button">Pick Selector</button>
-      </div>
-      <div style="margin-bottom: 16px;">
-        <button id="toggle-condition" type="button">Condition: ON</button>
-        <span class="desc">(Toggle to use or ignore selector condition)</span>
-      </div>
-      <div id="compare-container" style="margin-bottom: 18px; padding: 14px 0 0 0; border-top: 1px solid #ececec;">
-        <div style="display: flex; align-items: center; margin-bottom: 8px;">
-          <label style="font-weight:600; color:#3b3b3b; font-size:14px; flex:1;">Compare Selectors (opsional):</label>
-          <button id="toggle-compare" type="button" class="off" style="margin-left:10px;">OFF</button>
+      <div class="header-container">
+        <div class="header-logo">
+          <img src="assets/icon128.png" width="48px" alt="Auto-Refresher Logo" class="logo">
         </div>
-        <div id="compare-fields" style="display:none; gap:8px; flex-wrap:wrap; align-items:center;">
-          <input id="compare-selector1" type="text" placeholder="Selector 1" style="width:90px; padding:6px 8px; border-radius:6px; border:1.5px solid #bfc9d1; font-size:13px; margin-right:6px;" />
-          <select id="compare-operator" style="padding:6px 8px; border-radius:6px; border:1.5px solid #bfc9d1; font-size:13px; margin-right:6px;">
-            <option value="=">=</option>
-            <option value="!=">!=</option>
-            <option value=">">&gt;</option>
-            <option value="<">&lt;</option>
-            <option value=">=">&ge;</option>
-            <option value="<=">&le;</option>
-          </select>
-          <input id="compare-selector2" type="text" placeholder="Selector 2" style="width:90px; padding:6px 8px; border-radius:6px; border:1.5px solid #bfc9d1; font-size:13px; margin-right:6px;" />
-          <select id="compare-action" style="padding:6px 8px; border-radius:6px; border:1.5px solid #bfc9d1; font-size:13px; margin-right:6px;">
-            <option value="refresh">Refresh</option>
-            <option value="no-refresh">Tidak Refresh</option>
-          </select>
-          <span class="desc" style="margin:0;">Aksi jika hasil perbandingan terpenuhi</span>
+        <div class="header-text">
+          <h1 class="header-title extension-name">Auto-Page Refresher</h1>
+          <span class="version"></span>
+        </div>
+        <div class="header-icons">
+          <a href="https://trakteer.id/akbarhlubis/tip" class="icon-btn trakteer" target="_blank" title="Donate">
+            <i class="bi bi-heart-fill"></i>
+          </a>
+          <button id="check-update-btn" class="icon-btn" title="Check for Update">
+            <i class="bi bi-arrow-repeat"></i>
+          </button>
         </div>
       </div>
-      <div id="interval-container">
-        <label>Interval (ms): </label>
-        <input id="interval-input" type="number" min="100" value="1000" />
-        <button id="toggle-reload" type="button">Turn ON Reload</button>
+
+      <div class="settings-section">
+        <h2>Settings Condition and Actions</h2>
+        <form id="auto-refresher-form" autocomplete="off">
+          <div class="input-group">
+            <label>Selectors to check:</label>
+            <div id="selectors-list"></div>
+            <button id="add-selector" type="button" class="btn">Add Selector</button>
+            <button id="pick-selector" type="button" class="btn">Pick Selector</button>
+          </div>
+          <div class="input-group">
+            <button id="toggle-condition" type="button" class="btn">Condition: ON</button>
+            <span class="desc">(Toggle to use or ignore selector condition)</span>
+          </div>
+          <div class="collapse-optional">
+            <button class="collapse-toggle" type="button" data-target="#collapse-compare" aria-expanded="false" aria-controls="collapse-compare">
+              <i class="bi bi-chevron-down"></i> Compare Selectors (opsional)
+            </button>
+            <div id="collapse-compare" class="collapse-content" style="display:none;">
+              <div class="input-group">
+                <button id="toggle-compare" type="button" class="btn off" style="margin-bottom:8px;">OFF</button>
+                <div id="compare-fields" style="display:none; gap:8px; flex-wrap:wrap; align-items:center; margin-top:8px;">
+                  <div class="input-icon-group" style="position:relative;width:90px;">
+                    <i class="bi bi-hash input-icon" style="position:absolute;left:8px;top:50%;transform:translateY(-50%);color:#bfc9d1;font-size:15px;"></i>
+                    <input id="compare-selector1" type="text" placeholder="Selector 1" class="input-group styled-input" style="width:100%;padding-left:28px;" />
+                  </div>
+                  <div class="input-icon-group" style="position:relative;width:60px;">
+                    <i class="bi bi-funnel input-icon" style="position:absolute;left:8px;top:50%;transform:translateY(-50%);color:#bfc9d1;font-size:15px;"></i>
+                    <select id="compare-operator" class="input-group styled-select" style="width:100%;padding-left:28px;">
+                    <option value="=">=</option>
+                    <option value="!=">!=</option>
+                    <option value=">">&gt;</option>
+                    <option value="<">&lt;</option>
+                    <option value=">=">&ge;</option>
+                    <option value="<=">&le;</option>
+                  </select>
+                  </div>
+                  <div class="input-icon-group" style="position:relative;width:90px;">
+                    <i class="bi bi-hash input-icon" style="position:absolute;left:8px;top:50%;transform:translateY(-50%);color:#bfc9d1;font-size:15px;"></i>
+                    <input id="compare-selector2" type="text" placeholder="Selector 2" class="input-group styled-input" style="width:100%;padding-left:28px;" />
+                  </div>
+                  <div class="input-icon-group" style="position:relative;width:120px;">
+                    <i class="bi bi-lightning-charge input-icon" style="position:absolute;left:8px;top:50%;transform:translateY(-50%);color:#bfc9d1;font-size:15px;"></i>
+                    <select id="compare-action" class="input-group styled-select" style="width:100%;padding-left:28px;">
+                    <option value="refresh">Refresh</option>
+                    <option value="no-refresh">Tidak Refresh</option>
+                    </select>
+                  </div>
+                  <span class="desc" style="margin:0;">Aksi jika hasil perbandingan terpenuhi</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="collapse-optional">
+            <button class="collapse-toggle" type="button" data-target="#collapse-url-reload" aria-expanded="false" aria-controls="collapse-url-reload">
+              <i class="bi bi-chevron-down"></i> Reload URL tertentu (opsional)
+            </button>
+            <div id="collapse-url-reload" class="collapse-content" style="display:none;">
+              <div class="input-group">
+                <button id="toggle-url-reload" type="button" class="btn off" style="margin-bottom:8px;">OFF</button>
+                <div id="url-reload-fields" style="display:none; gap:8px; flex-wrap:wrap; align-items:center; margin-top:8px;">
+                  <div class="input-icon-group" style="position:relative;width:220px;">
+                    <i class="bi bi-link-45deg input-icon" style="position:absolute;left:8px;top:50%;transform:translateY(-50%);color:#bfc9d1;font-size:15px;"></i>
+                    <input id="url-reload-input" type="text" placeholder="https://contoh.com/page" class="input-group styled-input" style="width:100%;padding-left:28px;" />
+                  </div>
+                  <span class="desc" style="margin:0;">Tab dengan URL ini akan di-reload otomatis</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="input-group">
+            <label>Debug:</label>
+            <button id="debug-check" type="button" class="btn" style="background:#f59e42;">Debug Selector & Value</button>
+            <div id="debug-result" style="margin-top:10px;font-size:13px;color:#374151;background:#f1f5f9;padding:8px 10px;border-radius:6px;display:none;"></div>
+          </div>
+          <div class="input-group">
+            <label>Interval (ms): </label>
+            <div class="input-icon-group" style="position:relative;width:120px;display:inline-block;">
+              <i class="bi bi-clock input-icon" style="position:absolute;left:8px;top:50%;transform:translateY(-50%);color:#bfc9d1;font-size:15px;"></i>
+              <input id="interval-input" type="number" min="100" value="1000" class="input-group styled-input" style="width:100%;padding-left:28px;" />
+            </div>
+            <button id="toggle-reload" type="button" class="btn">Turn ON Reload</button>
+          </div>
+        </form>
+        <div class="footer">
+          <p>Designed and Developed With ❤ By Akbarhlubis</p>
+        </div>
       </div>
     </div>
     <script src="libs/jquery-3.7.1.min.js"></script>

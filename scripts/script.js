@@ -269,3 +269,18 @@ $(document).ready(function() {
     }
   });
 });
+
+  // Collapse/accordion logic (jQuery version)
+  $(document).on('click', '.collapse-toggle', function(e) {
+    e.preventDefault();
+    var $btn = $(this);
+    var targetSel = $btn.data('target');
+    var $target = $(targetSel);
+    var expanded = $btn.attr('aria-expanded') === 'true';
+    if ($target.length) {
+      $target.toggle(!expanded);
+      $btn.attr('aria-expanded', expanded ? 'false' : 'true');
+      var $icon = $btn.find('i').first();
+      $icon.attr('class', expanded ? 'bi bi-chevron-down' : 'bi bi-chevron-up');
+    }
+  });
