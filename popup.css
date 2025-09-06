@@ -186,6 +186,15 @@ body {
 .btn:hover {
   background: #4338ca;
 }
+/* Toggle ON/OFF style */
+.btn.on {
+  background: #22c55e !important; /* green */
+  color: #fff !important;
+}
+.btn.off {
+  background: #e11d48 !important; /* red */
+  color: #fff !important;
+}
 .footer {
   margin-top: 18px;
   text-align: center;

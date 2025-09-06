@@ -1,14 +1,23 @@
+  // Ambil URL tab aktif ke input url-reload
+  $('#get-current-url').on('click', function() {
+    chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+      if (tabs[0] && tabs[0].url) {
+        $('#url-reload-input').val(tabs[0].url).trigger('input');
+      }
+    });
+  });
   // URL reload opsional
   let urlReloadActive = false;
   let urlReloadValue = '';
+
   chrome.storage.local.get(['urlReloadActive', 'urlReloadValue'], function(result) {
     urlReloadActive = !!result.urlReloadActive;
     urlReloadValue = result.urlReloadValue || '';
     if (urlReloadActive) {
-      $('#toggle-url-reload').removeClass('off').text('ON');
+      $('#toggle-url-reload').removeClass('off').addClass('on').text('ON');
       $('#url-reload-fields').show();
     } else {
-      $('#toggle-url-reload').addClass('off').text('OFF');
+      $('#toggle-url-reload').removeClass('on').addClass('off').text('OFF');
       $('#url-reload-fields').hide();
     }
     $('#url-reload-input').val(urlReloadValue);
@@ -17,10 +26,10 @@
   $('#toggle-url-reload').on('click', function() {
     urlReloadActive = !urlReloadActive;
     if (urlReloadActive) {
-      $(this).removeClass('off').text('ON');
+      $(this).removeClass('off').addClass('on').text('ON');
       $('#url-reload-fields').show();
     } else {
-      $(this).addClass('off').text('OFF');
+      $(this).removeClass('on').addClass('off').text('OFF');
       $('#url-reload-fields').hide();
     }
     chrome.storage.local.set({urlReloadActive});
@@ -75,7 +84,7 @@ function renderSelectors() {
     const $row = $(`
       <div style="margin-bottom:4px;">
         <input type="text" class="selector-input" value="${sel}" style="width:180px;margin-right:8px;" />
-        <button class="remove-selector" data-idx="${idx}" type="button">Remove</button>
+        <button class="remove-selector btn off" data-idx="${idx}" type="button">Remove</button>
       </div>
     `);
     $list.append($row);
@@ -120,16 +129,16 @@ $(document).ready(function() {
     renderSelectors();
     $('#toggle-condition').text('Condition: ' + (useCondition ? 'ON' : 'OFF'));
     if (useCondition) {
-      $('#toggle-condition').removeClass('off');
+      $('#toggle-condition').removeClass('off').addClass('on');
     } else {
-      $('#toggle-condition').addClass('off');
+      $('#toggle-condition').removeClass('on').addClass('off');
     }
     // Set compare UI
     if (compareActive) {
-      $('#toggle-compare').removeClass('off').text('ON');
+      $('#toggle-compare').removeClass('off').addClass('on').text('ON');
       $('#compare-fields').show();
     } else {
-      $('#toggle-compare').addClass('off').text('OFF');
+      $('#toggle-compare').removeClass('on').addClass('off').text('OFF');
       $('#compare-fields').hide();
     }
     $('#compare-selector1').val(compareConfig.selector1);
@@ -141,10 +150,10 @@ $(document).ready(function() {
   $('#toggle-compare').on('click', function() {
     compareActive = !compareActive;
     if (compareActive) {
-      $(this).removeClass('off').text('ON');
+      $(this).removeClass('off').addClass('on').text('ON');
       $('#compare-fields').show();
     } else {
-      $(this).addClass('off').text('OFF');
+      $(this).removeClass('on').addClass('off').text('OFF');
       $('#compare-fields').hide();
     }
     saveCompareConfig();
@@ -196,9 +205,9 @@ $(document).ready(function() {
     useCondition = !useCondition;
     $(this).text('Condition: ' + (useCondition ? 'ON' : 'OFF'));
     if (useCondition) {
-      $(this).removeClass('off');
+      $(this).removeClass('off').addClass('on');
     } else {
-      $(this).addClass('off');
+      $(this).removeClass('on').addClass('off');
     }
     saveCondition();
     chrome.runtime.sendMessage({action: 'updateCondition', useCondition});
