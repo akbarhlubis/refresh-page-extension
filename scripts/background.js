@@ -126,29 +126,67 @@ function startReloading() {
             }
             if (tabs[0]) {
               if (useCondition) {
-                chrome.storage.local.get(['selectors'], function(result) {
+                // Check Advanced Compare first
+                chrome.storage.local.get(['advancedCompareActive', 'advancedCompareConfig'], function(advResult) {
                   if (chrome.runtime.lastError) {
-                    logError('Failed to get selectors', chrome.runtime.lastError);
+                    logError('Failed to get advanced compare config', chrome.runtime.lastError);
                     return;
                   }
-                  const selectors = result.selectors || [];
-                  chrome.tabs.sendMessage(tabs[0].id, {action: 'checkElements', selectors}, (response) => {
-                    if (chrome.runtime.lastError) {
-                      logError('Failed to send checkElements', chrome.runtime.lastError);
-                      return;
-                    }
-                    if (response && response.shouldReload) {
-                      chrome.tabs.reload(tabs[0].id, {}, () => {
+                  
+                  if (advResult.advancedCompareActive && advResult.advancedCompareConfig) {
+                    // Use Advanced Compare
+                    const config = advResult.advancedCompareConfig;
+                    chrome.tabs.sendMessage(tabs[0].id, {
+                      action: 'checkAdvancedCompare', 
+                      config: config
+                    }, (response) => {
+                      if (chrome.runtime.lastError) {
+                        logError('Failed to send checkAdvancedCompare', chrome.runtime.lastError);
+                        return;
+                      }
+                      
+                      const shouldReload = (config.action === 'refresh' && response && response.shouldReload) ||
+                                         (config.action === 'no-refresh' && response && !response.shouldReload);
+                      
+                      if (shouldReload) {
+                        chrome.tabs.reload(tabs[0].id, {}, () => {
+                          if (chrome.runtime.lastError) {
+                            logError('Failed to reload tab (advanced compare)', chrome.runtime.lastError);
+                          } else {
+                            logSuccess('Tab reloaded (advanced compare condition met)');
+                          }
+                        });
+                      } else {
+                        logSuccess('No reload needed (advanced compare condition not met)');
+                      }
+                    });
+                  } else {
+                    // Use old selector checking
+                    chrome.storage.local.get(['selectors'], function(result) {
+                      if (chrome.runtime.lastError) {
+                        logError('Failed to get selectors', chrome.runtime.lastError);
+                        return;
+                      }
+                      const selectors = result.selectors || [];
+                      chrome.tabs.sendMessage(tabs[0].id, {action: 'checkElements', selectors}, (response) => {
                         if (chrome.runtime.lastError) {
-                          logError('Failed to reload tab', chrome.runtime.lastError);
+                          logError('Failed to send checkElements', chrome.runtime.lastError);
+                          return;
+                        }
+                        if (response && response.shouldReload) {
+                          chrome.tabs.reload(tabs[0].id, {}, () => {
+                            if (chrome.runtime.lastError) {
+                              logError('Failed to reload tab', chrome.runtime.lastError);
+                            } else {
+                              logSuccess('Tab reloaded (condition not met)');
+                            }
+                          });
                         } else {
-                          logSuccess('Tab reloaded (condition not met)');
+                          logSuccess('No reload needed (condition met)');
                         }
                       });
-                    } else {
-                      logSuccess('No reload needed (condition met)');
-                    }
-                  });
+                    });
+                  }
                 });
               } else {
                 chrome.tabs.reload(tabs[0].id, {}, () => {

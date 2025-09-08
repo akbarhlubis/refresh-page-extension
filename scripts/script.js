@@ -38,36 +38,82 @@
     urlReloadValue = $(this).val();
     chrome.storage.local.set({urlReloadValue});
   });
+  
   // Debug button: cek selector dan value di halaman aktif
   $('#debug-check').on('click', function() {
-    // Ambil selector dari compare field
+    // Get both old compare and new advanced compare selectors
     const sel1 = $('#compare-selector1').val();
     const sel2 = $('#compare-selector2').val();
+    const advSel = $('#advanced-compare-selector').val();
+    const advValues = advancedCompareConfig.values;
+    
     chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
       if (tabs[0]) {
         chrome.scripting.executeScript({
           target: {tabId: tabs[0].id},
-          func: function(sel1, sel2) {
-            let el1 = null, el2 = null, v1 = '', v2 = '';
-            try { el1 = document.querySelector(sel1); } catch(e){}
-            try { el2 = document.querySelector(sel2); } catch(e){}
-            if (el1) v1 = el1.value !== undefined ? el1.value : (el1.textContent || '');
-            if (el2) v2 = el2.value !== undefined ? el2.value : (el2.textContent || '');
-            return {
-              sel1, found1: !!el1, value1: v1,
-              sel2, found2: !!el2, value2: v2
-            };
+          func: function(sel1, sel2, advSel, advValues) {
+            function getElementValue(selector) {
+              try {
+                const el = document.querySelector(selector);
+                if (!el) return null;
+                return el.value !== undefined ? el.value : (el.textContent || '').trim();
+              } catch(e) {
+                return null;
+              }
+            }
+            
+            function detectValueType(value) {
+              const trimmed = value.trim();
+              if (trimmed.startsWith('#') || trimmed.startsWith('.') || 
+                  trimmed.startsWith('[') || trimmed.includes('::') ||
+                  /^[a-zA-Z][a-zA-Z0-9]*$/.test(trimmed.split(' ')[0])) {
+                return 'selector';
+              }
+              return 'literal';
+            }
+            
+            let result = '';
+            
+            // Old compare debug
+            if (sel1 || sel2) {
+              let el1 = null, el2 = null, v1 = '', v2 = '';
+              try { el1 = document.querySelector(sel1); } catch(e){}
+              try { el2 = document.querySelector(sel2); } catch(e){}
+              if (el1) v1 = el1.value !== undefined ? el1.value : (el1.textContent || '');
+              if (el2) v2 = el2.value !== undefined ? el2.value : (el2.textContent || '');
+              
+              result += `<b>Basic Compare:</b><br>`;
+              result += `Selector 1: ${sel1} | Found: <b>${!!el1}</b> | Value: <b>${v1}</b><br>`;
+              result += `Selector 2: ${sel2} | Found: <b>${!!el2}</b> | Value: <b>${v2}</b><br><br>`;
+            }
+            
+            // Advanced compare debug
+            if (advSel && advValues.length > 0) {
+              const mainValue = getElementValue(advSel);
+              result += `<b>Advanced Compare:</b><br>`;
+              result += `Main Selector: ${advSel} | Found: <b>${mainValue !== null}</b> | Value: <b>${mainValue}</b><br><br>`;
+              
+              result += `<b>Compare Values:</b><br>`;
+              advValues.forEach((val, idx) => {
+                const valueType = detectValueType(val);
+                if (valueType === 'selector') {
+                  const compValue = getElementValue(val);
+                  result += `${idx + 1}. ${val} (SELECTOR) | Found: <b>${compValue !== null}</b> | Value: <b>${compValue}</b><br>`;
+                } else {
+                  result += `${idx + 1}. ${val} (LITERAL)<br>`;
+                }
+              });
+            }
+            
+            return result || 'No selectors to debug.';
           },
-          args: [sel1, sel2]
+          args: [sel1, sel2, advSel, advValues]
         }, function(results) {
           if (chrome.runtime.lastError || !results || !results[0]) {
             $('#debug-result').text('Gagal membaca selector.').show();
             return;
           }
-          const r = results[0].result;
-          let html = `<b>Selector 1:</b> ${r.sel1} <br> Ditemukan: <b>${r.found1}</b> <br> Value: <b>${r.value1}</b><br><br>`;
-          html += `<b>Selector 2:</b> ${r.sel2} <br> Ditemukan: <b>${r.found2}</b> <br> Value: <b>${r.value2}</b>`;
-          $('#debug-result').html(html).show();
+          $('#debug-result').html(results[0].result).show();
         });
       }
     });
@@ -277,6 +323,164 @@ $(document).ready(function() {
       saveSelectors();
     }
   });
+
+  // Advanced Compare Variables and Functions
+  let advancedCompareActive = false;
+  let advancedCompareConfig = {
+    selector: '',
+    operator: '=',
+    action: 'refresh',
+    logic: 'AND',
+    values: []
+  };
+
+  function saveAdvancedCompareConfig() {
+    chrome.storage.local.set({advancedCompareActive, advancedCompareConfig});
+  }
+
+  function loadAdvancedCompareConfig(cb) {
+    chrome.storage.local.get(['advancedCompareActive', 'advancedCompareConfig'], function(result) {
+      advancedCompareActive = typeof result.advancedCompareActive === 'boolean' ? result.advancedCompareActive : false;
+      advancedCompareConfig = result.advancedCompareConfig || {
+        selector: '',
+        operator: '=',
+        action: 'refresh',
+        logic: 'AND',
+        values: []
+      };
+      if (cb) cb();
+    });
+  }
+
+  function detectValueType(value) {
+    // Auto-detect if value is a selector or literal
+    const trimmed = value.trim();
+    if (trimmed.startsWith('#') || trimmed.startsWith('.') || 
+        trimmed.startsWith('[') || trimmed.includes('::') ||
+        /^[a-zA-Z][a-zA-Z0-9]*$/.test(trimmed.split(' ')[0])) {
+      return 'selector';
+    }
+    return 'literal';
+  }
+
+  function renderAdvancedCompareValues() {
+    const $container = $('#advanced-compare-values');
+    $container.empty();
+    
+    advancedCompareConfig.values.forEach((value, idx) => {
+      const valueType = detectValueType(value);
+      const typeDisplay = valueType === 'selector' ? 'SEL' : 'LIT';
+      const typeClass = valueType === 'selector' ? 'selector' : 'literal';
+      
+      const $row = $(`
+        <div class="advanced-compare-value-row">
+          <input type="text" class="advanced-compare-value-input" value="${value}" data-idx="${idx}" placeholder="Selector atau nilai literal" />
+          <span class="value-type-indicator ${typeClass}">${typeDisplay}</span>
+          <button class="advanced-compare-remove-btn" data-idx="${idx}">×</button>
+        </div>
+      `);
+      
+      if (idx > 0) {
+        const logicDisplay = $(`<div class="advanced-compare-logic-display">${advancedCompareConfig.logic}</div>`);
+        $container.append(logicDisplay);
+      }
+      
+      $container.append($row);
+    });
+  }
+
+  // Load Advanced Compare config on page load
+  loadAdvancedCompareConfig(function() {
+    // Set Advanced Compare UI
+    if (advancedCompareActive) {
+      $('#toggle-advanced-compare').removeClass('off').addClass('on').text('ON');
+      $('#advanced-compare-fields').show();
+    } else {
+      $('#toggle-advanced-compare').removeClass('on').addClass('off').text('OFF');
+      $('#advanced-compare-fields').hide();
+    }
+    
+    $('#advanced-compare-selector').val(advancedCompareConfig.selector);
+    $('#advanced-compare-operator').val(advancedCompareConfig.operator);
+    $('#advanced-compare-action').val(advancedCompareConfig.action);
+    $('#advanced-compare-logic').val(advancedCompareConfig.logic);
+    
+    // Add default values if empty
+    if (advancedCompareConfig.values.length === 0) {
+      advancedCompareConfig.values = ['#nilai2', 'Hello World'];
+      saveAdvancedCompareConfig();
+    }
+    
+    renderAdvancedCompareValues();
+  });
+
+  // Toggle Advanced Compare feature
+  $('#toggle-advanced-compare').on('click', function() {
+    advancedCompareActive = !advancedCompareActive;
+    if (advancedCompareActive) {
+      $(this).removeClass('off').addClass('on').text('ON');
+      $('#advanced-compare-fields').show();
+    } else {
+      $(this).removeClass('on').addClass('off').text('OFF');
+      $('#advanced-compare-fields').hide();
+    }
+    saveAdvancedCompareConfig();
+  });
+
+  // Update Advanced Compare config fields
+  $('#advanced-compare-selector').on('input', function() {
+    advancedCompareConfig.selector = $(this).val();
+    saveAdvancedCompareConfig();
+  });
+
+  $('#advanced-compare-operator').on('change', function() {
+    advancedCompareConfig.operator = $(this).val();
+    saveAdvancedCompareConfig();
+  });
+
+  $('#advanced-compare-action').on('change', function() {
+    advancedCompareConfig.action = $(this).val();
+    saveAdvancedCompareConfig();
+  });
+
+  $('#advanced-compare-logic').on('change', function() {
+    advancedCompareConfig.logic = $(this).val();
+    saveAdvancedCompareConfig();
+    renderAdvancedCompareValues(); // Re-render to update logic display
+  });
+
+  // Add new value
+  $('#add-advanced-compare-value').on('click', function() {
+    advancedCompareConfig.values.push('');
+    renderAdvancedCompareValues();
+    saveAdvancedCompareConfig();
+  });
+
+  // Update value
+  $('#advanced-compare-values').on('input', '.advanced-compare-value-input', function() {
+    const idx = $(this).data('idx');
+    const value = $(this).val();
+    advancedCompareConfig.values[idx] = value;
+    
+    // Update type indicator
+    const valueType = detectValueType(value);
+    const typeDisplay = valueType === 'selector' ? 'SEL' : 'LIT';
+    const typeClass = valueType === 'selector' ? 'selector' : 'literal';
+    
+    const $indicator = $(this).siblings('.value-type-indicator');
+    $indicator.removeClass('selector literal').addClass(typeClass).text(typeDisplay);
+    
+    saveAdvancedCompareConfig();
+  });
+
+  // Remove value
+  $('#advanced-compare-values').on('click', '.advanced-compare-remove-btn', function() {
+    const idx = $(this).data('idx');
+    advancedCompareConfig.values.splice(idx, 1);
+    renderAdvancedCompareValues();
+    saveAdvancedCompareConfig();
+  });
+
 });
 
   // Collapse/accordion logic (jQuery version)

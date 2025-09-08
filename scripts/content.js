@@ -36,6 +36,90 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     // Agar sendResponse async
     return true;
   }
+  
+  // Handler untuk Advanced Compare
+  if (msg.action === 'checkAdvancedCompare' && msg.config) {
+    const config = msg.config;
+    
+    function getElementValue(selector) {
+      try {
+        const el = document.querySelector(selector);
+        if (!el) return null;
+        return el.value !== undefined ? el.value : (el.textContent || '').trim();
+      } catch(e) {
+        return null;
+      }
+    }
+    
+    function detectValueType(value) {
+      const trimmed = value.trim();
+      if (trimmed.startsWith('#') || trimmed.startsWith('.') || 
+          trimmed.startsWith('[') || trimmed.includes('::') ||
+          /^[a-zA-Z][a-zA-Z0-9]*$/.test(trimmed.split(' ')[0])) {
+        return 'selector';
+      }
+      return 'literal';
+    }
+    
+    function compareValues(mainValue, compareValue, operator) {
+      if (mainValue === null) return false;
+      
+      switch (operator) {
+        case '=':
+          return mainValue == compareValue;
+        case '!=':
+          return mainValue != compareValue;
+        case '>':
+          return parseFloat(mainValue) > parseFloat(compareValue);
+        case '<':
+          return parseFloat(mainValue) < parseFloat(compareValue);
+        case '>=':
+          return parseFloat(mainValue) >= parseFloat(compareValue);
+        case '<=':
+          return parseFloat(mainValue) <= parseFloat(compareValue);
+        case 'contains':
+          return mainValue.includes(compareValue);
+        case 'not-contains':
+          return !mainValue.includes(compareValue);
+        default:
+          return false;
+      }
+    }
+    
+    // Get main selector value
+    const mainValue = getElementValue(config.selector);
+    
+    if (mainValue === null) {
+      sendResponse({shouldReload: false});
+      return;
+    }
+    
+    // Process comparison values
+    const results = config.values.map(value => {
+      const valueType = detectValueType(value);
+      let compareValue;
+      
+      if (valueType === 'selector') {
+        compareValue = getElementValue(value);
+        if (compareValue === null) return false;
+      } else {
+        compareValue = value;
+      }
+      
+      return compareValues(mainValue, compareValue, config.operator);
+    });
+    
+    // Apply AND/OR logic
+    let finalResult = false;
+    if (config.logic === 'AND') {
+      finalResult = results.length > 0 && results.every(r => r);
+    } else if (config.logic === 'OR') {
+      finalResult = results.some(r => r);
+    }
+    
+    sendResponse({shouldReload: finalResult});
+    return true;
+  }
 });
 
 // Selector Picker Feature (Vanilla JS)
