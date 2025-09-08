@@ -2,9 +2,10 @@
   <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Page Refresher</title>
+  <title>Auto-Page Refresher</title>
   <link rel="stylesheet" href="popup.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" type="text/css" href="/assets/toastify.min.css">
 </head> 
 <body>
     <div class="container">
@@ -46,34 +47,104 @@
             <div id="collapse-compare" class="collapse-content" style="display:none;">
               <div class="input-group">
                 <button id="toggle-compare" type="button" class="btn off" style="margin-bottom:8px;">OFF</button>
-                <div id="compare-fields" style="display:none; gap:8px; flex-wrap:wrap; align-items:center; margin-top:8px;">
-                  <div class="input-icon-group" style="position:relative;width:90px;">
-                    <i class="bi bi-hash input-icon" style="position:absolute;left:8px;top:50%;transform:translateY(-50%);color:#bfc9d1;font-size:15px;"></i>
-                    <input id="compare-selector1" type="text" placeholder="Selector 1" class="input-group styled-input" style="width:100%;padding-left:28px;" />
+                <div id="compare-fields" style="display:none; flex-direction:column; gap:8px; margin-top:8px;">
+                  <div class="compare-main" style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
+                    <div class="input-icon-group" style="position:relative;width:120px;">
+                      <i class="bi bi-hash input-icon" style="position:absolute;left:8px;top:50%;transform:translateY(-50%);color:#bfc9d1;font-size:15px;"></i>
+                      <input id="compare-selector1" type="text" placeholder="Selector utama" class="styled-input" style="width:100%;padding-left:28px;" />
+                    </div>
+                    <div class="input-icon-group" style="position:relative;width:60px;">
+                      <i class="bi bi-funnel input-icon" style="position:absolute;left:8px;top:50%;transform:translateY(-50%);color:#bfc9d1;font-size:15px;"></i>
+                      <select id="compare-operator" class="styled-select" style="width:100%;padding-left:28px;">
+                        <option value="=">=</option>
+                        <option value="!=">!=</option>
+                        <option value=">">&gt;</option>
+                        <option value="<">&lt;</option>
+                        <option value=">=">&ge;</option>
+                        <option value="<=">&le;</option>
+                      </select>
+                    </div>
+                    <span style="font-weight:bold;">( </span>
+                    <div class="input-icon-group" style="position:relative;width:120px;">
+                      <i class="bi bi-hash input-icon" style="position:absolute;left:8px;top:50%;transform:translateY(-50%);color:#bfc9d1;font-size:15px;"></i>
+                      <input id="compare-selector2" type="text" placeholder="Selector kedua" class="styled-input" style="width:100%;padding-left:28px;" />
+                    </div>
+                    <span style="font-weight:bold;"> ) </span>
+                    <div class="input-icon-group" style="position:relative;width:120px;">
+                      <i class="bi bi-lightning-charge input-icon" style="position:absolute;left:8px;top:50%;transform:translateY(-50%);color:#bfc9d1;font-size:15px;"></i>
+                      <select id="compare-action" class="styled-select" style="width:100%;padding-left:28px;">
+                        <option value="refresh">Refresh</option>
+                        <option value="no-refresh">Tidak Refresh</option>
+                      </select>
+                    </div>
                   </div>
-                  <div class="input-icon-group" style="position:relative;width:60px;">
-                    <i class="bi bi-funnel input-icon" style="position:absolute;left:8px;top:50%;transform:translateY(-50%);color:#bfc9d1;font-size:15px;"></i>
-                    <select id="compare-operator" class="input-group styled-select" style="width:100%;padding-left:28px;">
-                    <option value="=">=</option>
-                    <option value="!=">!=</option>
-                    <option value=">">&gt;</option>
-                    <option value="<">&lt;</option>
-                    <option value=">=">&ge;</option>
-                    <option value="<=">&le;</option>
-                  </select>
+                </div>
+                <span class="desc" style="margin:0;">Bandingkan selector utama dengan multiple values menggunakan AND/OR.<br><small>Tips: Selector (#id, .class) atau nilai literal (-, text, angka)</small></span>
+              </div>
+            </div>
+          </div>
+          <div class="collapse-optional">
+            <button class="collapse-toggle" type="button" data-target="#collapse-advanced-compare" aria-expanded="false" aria-controls="collapse-advanced-compare">
+              <i class="bi bi-chevron-down"></i> Advanced Compare
+            </button>
+            <div id="collapse-advanced-compare" class="collapse-content" style="display:none;">
+              <div class="input-group">
+                <button id="toggle-advanced-compare" type="button" class="btn off" style="margin-bottom:8px;">OFF</button>
+                <div id="advanced-compare-fields" style="display:none; flex-direction:column; gap:12px; margin-top:8px;">
+                  <div class="advanced-compare-main" style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
+                    <div class="input-icon-group" style="position:relative;width:140px;">
+                      <i class="bi bi-hash input-icon" style="position:absolute;left:8px;top:50%;transform:translateY(-50%);color:#bfc9d1;font-size:15px;"></i>
+                      <input id="advanced-compare-selector" type="text" placeholder="Selector utama" class="styled-input" style="width:100%;padding-left:28px;" />
+                    </div>
+                    <div class="input-icon-group" style="position:relative;width:70px;">
+                      <i class="bi bi-funnel input-icon" style="position:absolute;left:8px;top:50%;transform:translateY(-50%);color:#bfc9d1;font-size:15px;"></i>
+                      <select id="advanced-compare-operator" class="styled-select" style="width:100%;padding-left:28px;">
+                        <option value="=">=</option>
+                        <option value="!=">!=</option>
+                        <option value=">">&gt;</option>
+                        <option value="<">&lt;</option>
+                        <option value=">=">&ge;</option>
+                        <option value="<=">&le;</option>
+                        <option value="contains">contains</option>
+                        <option value="not-contains">not contains</option>
+                      </select>
+                    </div>
+                    <div class="input-icon-group" style="position:relative;width:100px;">
+                      <i class="bi bi-lightning-charge input-icon" style="position:absolute;left:8px;top:50%;transform:translateY(-50%);color:#bfc9d1;font-size:15px;"></i>
+                      <select id="advanced-compare-action" class="styled-select" style="width:100%;padding-left:28px;">
+                        <option value="refresh">Refresh</option>
+                        <option value="no-refresh">Tidak Refresh</option>
+                      </select>
+                    </div>
                   </div>
-                  <div class="input-icon-group" style="position:relative;width:90px;">
-                    <i class="bi bi-hash input-icon" style="position:absolute;left:8px;top:50%;transform:translateY(-50%);color:#bfc9d1;font-size:15px;"></i>
-                    <input id="compare-selector2" type="text" placeholder="Selector 2" class="input-group styled-input" style="width:100%;padding-left:28px;" />
+                  
+                  <div class="advanced-compare-values-section">
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                      <span style="font-weight:bold;font-size:14px;">( </span>
+                      <div class="input-icon-group" style="position:relative;width:100px;">
+                        <i class="bi bi-diagram-3 input-icon" style="position:absolute;left:8px;top:50%;transform:translateY(-50%);color:#bfc9d1;font-size:15px;"></i>
+                        <select id="advanced-compare-logic" class="styled-select" style="width:100%;padding-left:28px;">
+                          <option value="AND">AND</option>
+                          <option value="OR">OR</option>
+                        </select>
+                      </div>
+                      <button id="add-advanced-compare-value" type="button" class="btn" style="padding:4px 12px;font-size:13px;">Add Value</button>
+                    </div>
+                    
+                    <div id="advanced-compare-values" style="margin-left:20px;">
+                      <!-- Value rows will be rendered here -->
+                    </div>
+                    
+                    <span style="font-weight:bold;font-size:14px;margin-left:20px;"> ) </span>
                   </div>
-                  <div class="input-icon-group" style="position:relative;width:120px;">
-                    <i class="bi bi-lightning-charge input-icon" style="position:absolute;left:8px;top:50%;transform:translateY(-50%);color:#bfc9d1;font-size:15px;"></i>
-                    <select id="compare-action" class="input-group styled-select" style="width:100%;padding-left:28px;">
-                    <option value="refresh">Refresh</option>
-                    <option value="no-refresh">Tidak Refresh</option>
-                    </select>
-                  </div>
-                  <span class="desc" style="margin:0;">Aksi jika hasil perbandingan terpenuhi</span>
+                </div>
+                <div class="desc" style="margin:0;">
+                  <strong>Advanced Compare:</strong> Bandingkan selector dengan multiple values menggunakan AND/OR.<br>
+                  <small><strong>Tips:</strong> 
+                    • Gunakan <code>#id</code> atau <code>.class</code> untuk selector<br>
+                    • Gunakan text biasa untuk nilai literal<br>
+                    • Contoh: <code>#nilai1</code> vs <code>#nilai2</code> atau <code>text123</code>
+                  </small>
                 </div>
               </div>
             </div>
