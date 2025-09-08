@@ -115,7 +115,7 @@ body {
 }
 .version {
   font-size: 11px;
-  color: #922b21;
+  color: #6366f1;
   background: #fadbd8;
   padding: 1px 6px;
   border-radius: 8px;
@@ -152,11 +152,11 @@ body {
   pointer-events: none;
 }
 .icon-btn.trakteer {
-  color: #e74c3c;
+  color: #6366f1;
   animation: trakteer 0.5s infinite;
 }
 .icon-btn.trakteer:hover {
-  color: #c0392b;
+  color: #2023f9;
   background: #fdf2f2;
   animation: none;
   transform: scale(1.05);
